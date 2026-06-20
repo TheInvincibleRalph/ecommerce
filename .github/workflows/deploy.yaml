@@ -1,0 +1,68 @@
+name: Build, Push, and Update GitOps
+
+on:
+  push:
+    branches:
+      - main
+
+# Required for AWS OIDC authentication
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_REGION: us-east-2
+  ECR_REPOSITORY: core-monolith
+
+  GITOPS_REPO: github.com/TheInvincibleRalph/ecommerce-gitops.git 
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Application Code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::681504525746:role/github-actions-ecr-push
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and Push Docker Image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          # We use the Git commit hash as the unique image tag
+          IMAGE_TAG: ${{ github.sha }} 
+        run: |
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+
+      - name: Checkout GitOps Repository
+        uses: actions/checkout@v4
+        with:
+          repository: YOUR_GITHUB_USERNAME/ecommerce-gitops
+          # Uses the Personal Access Token we created
+          token: ${{ secrets.GITOPS_PAT }} 
+          path: gitops-repo
+
+      - name: Update Kubernetes Manifests
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          cd gitops-repo
+          
+          # This command finds the image line and swaps in the brand new ECR image tag
+          sed -i "s|image: .*|image: $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG|g" apps/core-monolith/deployment.yaml
+          
+          # Commit and push the changes back to GitHub
+          git config user.name "GitHub Actions Bot"
+          git config user.email "actions@github.com"
+          git add apps/core-monolith/deployment.yaml
+          git commit -m "chore: auto-update image to $IMAGE_TAG"
+          git push
