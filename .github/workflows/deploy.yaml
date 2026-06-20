@@ -39,7 +39,7 @@ jobs:
           # We use the Git commit hash as the unique image tag
           IMAGE_TAG: ${{ github.sha }} 
         run: |
-          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG ./docker/application
+          docker build -f ./docker/application/Dockerfile -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
 
       - name: Checkout GitOps Repository
