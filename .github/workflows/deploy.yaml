@@ -58,7 +58,7 @@ jobs:
           cd gitops-repo
           
           # This command finds the image line and swaps in the brand new ECR image tag
-          sed -i "s|image: .*|image: $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG|g" apps/core-monolith/deployment.yaml
+          sed -i "s|image: .*|image: $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG|g" apps/core/deployment.yaml
           
           # Commit and push the changes back to GitHub
           git config user.name "GitHub Actions Bot"
