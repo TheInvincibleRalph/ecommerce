@@ -10,7 +10,7 @@ RUN apt-get update && apt-get install -y \
     && docker-php-ext-install mysqli pdo pdo_mysql \
     && a2enmod rewrite
 
-COPY app/ecommerce-app .
+COPY ecommerce-app .
 
 RUN chown -R www-data:www-data /var/www/html && \
     find /var/www/html -type d -exec chmod 755 {} \; && \
