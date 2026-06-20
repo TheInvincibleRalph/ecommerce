@@ -45,7 +45,7 @@ jobs:
       - name: Checkout GitOps Repository
         uses: actions/checkout@v4
         with:
-          repository: YOUR_GITHUB_USERNAME/ecommerce-gitops
+          repository: TheInvincibleRalph/ecommerce-gitops
           # Uses the Personal Access Token we created
           token: ${{ secrets.GITOPS_PAT }} 
           path: gitops-repo
