@@ -63,6 +63,6 @@ jobs:
           # Commit and push the changes back to GitHub
           git config user.name "GitHub Actions Bot"
           git config user.email "actions@github.com"
-          git add apps/core-monolith/deployment.yaml
+          git add apps/core/deployment.yaml
           git commit -m "chore: auto-update image to $IMAGE_TAG"
           git push
