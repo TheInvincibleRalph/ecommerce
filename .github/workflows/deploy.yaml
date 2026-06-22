@@ -69,6 +69,6 @@ jobs:
           # Commit and push both files back to GitHub
           git config user.name "GitHub Actions Bot"
           git config user.email "actions@github.com"
-          git add apps/core/deployment.yaml apps/core/database/statefulset.yaml
+          git add apps/core/deployment.yaml apps/database/statefulset.yaml
           git commit -m "chore: auto-update application and database images to $IMAGE_TAG"
           git push
