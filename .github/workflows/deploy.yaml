@@ -64,7 +64,7 @@ jobs:
           sed -i "s|image: .*|image: $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG|g" apps/core/deployment.yaml
           
           # Update the Database StatefulSet
-          sed -i "s|image: .*|image: $ECR_REGISTRY/$ECR_DB_REPOSITORY:$IMAGE_TAG|g" apps/core/database/statefulset.yaml
+          sed -i "s|image: .*|image: $ECR_REGISTRY/$ECR_DB_REPOSITORY:$IMAGE_TAG|g" apps/database/statefulset.yaml
           
           # Commit and push both files back to GitHub
           git config user.name "GitHub Actions Bot"
