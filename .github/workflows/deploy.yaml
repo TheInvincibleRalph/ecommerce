@@ -13,7 +13,7 @@ permissions:
 env:
   AWS_REGION: us-east-2
   ECR_REPOSITORY: core-monolith
-
+  ECR_DB_REPOSITORY: database 
   GITOPS_REPO: github.com/TheInvincibleRalph/ecommerce-gitops.git 
 
 jobs:
@@ -33,20 +33,23 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
-      - name: Build and Push Docker Image
+      - name: Build and Push Docker Images
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          # We use the Git commit hash as the unique image tag
           IMAGE_TAG: ${{ github.sha }} 
         run: |
+          # 1. Build and Push the PHP Monolith
           docker build -f ./docker/application/Dockerfile -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          
+          # 2. Build and Push the MySQL Database
+          docker build -f ./docker/database/Dockerfile -t $ECR_REGISTRY/$ECR_DB_REPOSITORY:$IMAGE_TAG .
+          docker push $ECR_REGISTRY/$ECR_DB_REPOSITORY:$IMAGE_TAG
 
       - name: Checkout GitOps Repository
         uses: actions/checkout@v4
         with:
           repository: TheInvincibleRalph/ecommerce-gitops
-          # Uses the Personal Access Token we created
           token: ${{ secrets.GITOPS_PAT }} 
           path: gitops-repo
 
@@ -57,12 +60,15 @@ jobs:
         run: |
           cd gitops-repo
           
-          # This command finds the image line and swaps in the brand new ECR image tag
+          # Update the Monolith Deployment
           sed -i "s|image: .*|image: $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG|g" apps/core/deployment.yaml
           
-          # Commit and push the changes back to GitHub
+          # Update the Database StatefulSet
+          sed -i "s|image: .*|image: $ECR_REGISTRY/$ECR_DB_REPOSITORY:$IMAGE_TAG|g" apps/core/database/statefulset.yaml
+          
+          # Commit and push both files back to GitHub
           git config user.name "GitHub Actions Bot"
           git config user.email "actions@github.com"
-          git add apps/core/deployment.yaml
-          git commit -m "chore: auto-update image to $IMAGE_TAG"
+          git add apps/core/deployment.yaml apps/core/database/statefulset.yaml
+          git commit -m "chore: auto-update application and database images to $IMAGE_TAG"
           git push
